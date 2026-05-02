@@ -8,6 +8,9 @@ function DashboardPage() {
   const [booksCount, setBooksCount] = useState(0);
   const [booksError, setBooksError] = useState("");
 
+  const [roomsCount, setRoomsCount] = useState(0);
+  const [roomsCountError, setRoomsCountError] = useState("");
+
   const [roomName, setRoomName] = useState("");
   const [roomSearchError, setRoomSearchError] = useState("");
   const [isSearchingRooms, setIsSearchingRooms] = useState(false);
@@ -30,23 +33,36 @@ function DashboardPage() {
   useEffect(() => {
     let isCancelled = false;
 
-    const loadBooks = async () => {
+    const loadDashboardData = async () => {
       setBooksError("");
+      setRoomsCountError("");
 
       try {
-        const data = await fetchBooks();
+        const booksData = await fetchBooks();
 
         if (!isCancelled) {
-          setBooksCount(Array.isArray(data) ? data.length : 0);
+          setBooksCount(Array.isArray(booksData) ? booksData.length : 0);
         }
       } catch (err) {
         if (!isCancelled) {
           setBooksError(getApiErrorMessage(err, "Failed to load books count"));
         }
       }
+
+      try {
+        const roomsData = await fetchRooms();
+
+        if (!isCancelled) {
+          setRoomsCount(Array.isArray(roomsData) ? roomsData.length : 0);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setRoomsCountError(getApiErrorMessage(err, "Failed to load rooms count"));
+        }
+      }
     };
 
-    loadBooks();
+    loadDashboardData();
 
     return () => {
       isCancelled = true;
@@ -97,22 +113,29 @@ function DashboardPage() {
         </div>
       </section>
 
-     <div className="grid grid-2" style={{ marginTop: 20 }}>
-  <div className="stat-card">
-    <div className="stat-label">Available Books</div>
-    <div className="stat-value">{booksCount}</div>
-  </div>
+      <div className="grid grid-2" style={{ marginTop: 20 }}>
+        <div className="stat-card">
+          <div className="stat-label">Available Books</div>
+          <div className="stat-value">{booksCount}</div>
+        </div>
 
-  <div className="stat-card">
-    <div className="stat-label">Available Rooms</div>
-    <div className="stat-value">{rooms.length}</div>
-  </div>
-</div>
+        <div className="stat-card">
+          <div className="stat-label">Available Rooms</div>
+          <div className="stat-value">{roomsCount}</div>
+        </div>
+      </div>
 
       {booksError ? (
         <section className="card" style={{ marginTop: 20 }}>
           <h2 className="section-title">Couldn&apos;t Load Books</h2>
           <p className="card-text">{booksError}</p>
+        </section>
+      ) : null}
+
+      {roomsCountError ? (
+        <section className="card" style={{ marginTop: 20 }}>
+          <h2 className="section-title">Couldn&apos;t Load Rooms</h2>
+          <p className="card-text">{roomsCountError}</p>
         </section>
       ) : null}
 

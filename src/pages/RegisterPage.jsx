@@ -62,7 +62,7 @@ function RegisterPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="brand" style={{ marginBottom: 20 }}>
-          <div className="brand-badge">B</div>
+          <img src="/logo.png" alt="BookCircle logo" className="logo" />
           <div>
             <div className="brand-title">BookCircle</div>
             <div className="brand-subtitle">Create your reading identity</div>

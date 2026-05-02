@@ -3,9 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { fetchBooks } from "../api/booksApi";
 import { createRoom } from "../api/roomsApi";
 import { getApiErrorMessage } from "../utils/getApiErrorMessage";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-
-
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 
 
 function LocationPickerMap({ lat, lon, onSelectLocation }) {
@@ -33,7 +31,7 @@ function LocationPickerMap({ lat, lon, onSelectLocation }) {
         />
 
         <MapClickHandler />
-
+        
         {lat && lon ? <Marker position={position} /> : null}
       </MapContainer>
     </div>
@@ -71,6 +69,18 @@ function CreateRoomPage() {
     lon,
   }));
 };
+
+function RecenterMap({ lat, lon }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (lat && lon) {
+      map.setView([Number(lat), Number(lon)], 14);
+    }
+  }, [lat, lon, map]);
+
+  return null;
+}
 
   useEffect(() => {
     let isCancelled = false;
@@ -123,26 +133,39 @@ function CreateRoomPage() {
     }));
   };
 
-  const handleUseMyLocation = () => {
-    setSubmitError("");
-    if (!navigator.geolocation) {
-      setSubmitError("Geolocation is not supported by your browser");
-      return;
-    }
+ const handleUseMyLocation = () => {
+  setSubmitError("");
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setForm((prev) => ({
-          ...prev,
-          lat: String(position.coords.latitude),
-          lon: String(position.coords.longitude),
-        }));
-      },
-      () => {
+  if (!navigator.geolocation) {
+    setSubmitError("Geolocation is not supported by your browser");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude.toFixed(6);
+      const lon = position.coords.longitude.toFixed(6);
+
+      setForm((prev) => ({
+        ...prev,
+        lat,
+        lon,
+      }));
+    },
+    (error) => {
+      if (error.code === error.PERMISSION_DENIED) {
+        setSubmitError("Location permission denied. Please allow location access in browser settings.");
+      } else {
         setSubmitError("Cannot access current location");
       }
-    );
-  };
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    }
+  );
+};
 
   const handleSubmit = async (event) => {
     event.preventDefault();
