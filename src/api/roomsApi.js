@@ -1,12 +1,7 @@
 import api from "./axios";
 
-export const fetchRooms = async (params) => {
-  const res = await api.get("/rooms", { params });
-  return res.data;
-};
-
-export const fetchRoom = async (id) => {
-  const res = await api.get(`/rooms/${id}`);
+export const fetchRooms = async () => {
+  const res = await api.get("/rooms");
   return res.data;
 };
 
@@ -15,12 +10,14 @@ export const createRoom = async (data) => {
   return res.data;
 };
 
-export const updateRoom = async (id, data) => {
-  const res = await api.put(`/rooms/${id}`, data);
+export const joinRoom = async (roomId) => {
+  const res = await api.post(`/rooms/${roomId}/join`);
   return res.data;
 };
 
-export const deleteRoom = async (id) => {
-  const res = await api.delete(`/rooms/${id}`);
+export const fetchRoomsByH3 = async (h3Index) => {
+  const res = await api.get("/rooms/by-h3", {
+    params: { h3Index },
+  });
   return res.data;
 };

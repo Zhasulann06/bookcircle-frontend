@@ -1,6 +1,81 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { fetchBooks } from "../api/booksApi";
+import { fetchRooms } from "../api/roomsApi";
+import { getApiErrorMessage } from "../utils/getApiErrorMessage";
 
 function DashboardPage() {
+  const [booksCount, setBooksCount] = useState(0);
+  const [booksError, setBooksError] = useState("");
+
+  const [roomName, setRoomName] = useState("");
+  const [roomSearchError, setRoomSearchError] = useState("");
+  const [isSearchingRooms, setIsSearchingRooms] = useState(false);
+  const [rooms, setRooms] = useState([]);
+
+  const lastCreatedRoom = useMemo(() => {
+    const rawValue = localStorage.getItem("lastCreatedRoom");
+
+    if (!rawValue) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawValue);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadBooks = async () => {
+      setBooksError("");
+
+      try {
+        const data = await fetchBooks();
+
+        if (!isCancelled) {
+          setBooksCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setBooksError(getApiErrorMessage(err, "Failed to load books count"));
+        }
+      }
+    };
+
+    loadBooks();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const handleFindRooms = async (event) => {
+    event.preventDefault();
+
+    setRoomSearchError("");
+    setIsSearchingRooms(true);
+
+    try {
+      const data = await fetchRooms();
+      const allRooms = Array.isArray(data) ? data : [];
+
+      const filteredRooms = allRooms.filter((room) =>
+        room.name?.toLowerCase().includes(roomName.trim().toLowerCase())
+      );
+
+      setRooms(filteredRooms);
+    } catch (err) {
+      setRooms([]);
+      setRoomSearchError(getApiErrorMessage(err, "Failed to find rooms"));
+    } finally {
+      setIsSearchingRooms(false);
+    }
+  };
+
   return (
     <div>
       <section className="hero-card">
@@ -9,9 +84,7 @@ function DashboardPage() {
         </h1>
 
         <p className="hero-text">
-          BookCircle is designed as a collaborative reading experience where
-          users can join location-aware rooms, follow chapter progress, and keep
-          discussions aligned with what they have actually read.
+          Track your books, discover reading rooms, and continue chapter by chapter.
         </p>
 
         <div className="hero-actions">
@@ -22,97 +95,110 @@ function DashboardPage() {
             Explore Books
           </Link>
         </div>
-
-        <div className="hero-note">
-          Front-end shell prepared for later backend integration.
-        </div>
       </section>
 
-      <div className="grid grid-3" style={{ marginTop: 20 }}>
-        <div className="stat-card">
-          <div className="stat-label">Active Reading Rooms</div>
-          <div className="stat-value">24</div>
-        </div>
+     <div className="grid grid-2" style={{ marginTop: 20 }}>
+  <div className="stat-card">
+    <div className="stat-label">Available Books</div>
+    <div className="stat-value">{booksCount}</div>
+  </div>
 
-        <div className="stat-card">
-          <div className="stat-label">Available Books</div>
-          <div className="stat-value">128</div>
-        </div>
+  <div className="stat-card">
+    <div className="stat-label">Available Rooms</div>
+    <div className="stat-value">{rooms.length}</div>
+  </div>
+</div>
 
-        <div className="stat-card">
-          <div className="stat-label">Community Comments</div>
-          <div className="stat-value">1.3K</div>
-        </div>
-      </div>
+      {booksError ? (
+        <section className="card" style={{ marginTop: 20 }}>
+          <h2 className="section-title">Couldn&apos;t Load Books</h2>
+          <p className="card-text">{booksError}</p>
+        </section>
+      ) : null}
 
       <div className="grid grid-2" style={{ marginTop: 20 }}>
         <section className="card">
-          <h2 className="section-title">Platform Overview</h2>
-          <p className="card-text">
-            BookCircle combines book discovery, social room participation,
-            progress tracking, and spoiler-safe discussion mechanics in one
-            product flow.
+          <h2 className="section-title">Find Rooms by Name</h2>
+          <p className="card-text" style={{ marginBottom: 14 }}>
+            Enter a room name to search existing reading rooms.
           </p>
 
-          <div className="grid" style={{ marginTop: 18 }}>
-            <div className="comment-item">
-              <strong>Discover Books</strong>
-              <p className="card-text" style={{ marginTop: 6 }}>
-                Browse reading options and connect a selected book to a room.
-              </p>
-            </div>
+          <form className="form" onSubmit={handleFindRooms}>
+            <label className="label">
+              Room Name
+              <input
+                className="input"
+                type="text"
+                placeholder="Example: Clean Code"
+                value={roomName}
+                onChange={(event) => setRoomName(event.target.value)}
+                required
+              />
+            </label>
 
-            <div className="comment-item">
-              <strong>Create or Join Rooms</strong>
-              <p className="card-text" style={{ marginTop: 6 }}>
-                Build small reading communities around one book and one location
-                segment.
+            {roomSearchError ? (
+              <p className="helper-text" style={{ color: "#ef4444" }}>
+                {roomSearchError}
               </p>
-            </div>
+            ) : null}
 
-            <div className="comment-item">
-              <strong>Follow Reading Progress</strong>
-              <p className="card-text" style={{ marginTop: 6 }}>
-                Update chapter progress and unlock only relevant discussion
-                content.
-              </p>
-            </div>
-          </div>
+            <button className="button" type="submit" disabled={isSearchingRooms}>
+              {isSearchingRooms ? "Searching..." : "Find Rooms"}
+            </button>
+          </form>
         </section>
 
         <section className="card">
-          <h2 className="section-title">Quick Actions</h2>
-
-          <div className="grid">
-            <Link className="comment-item" to="/books">
-              <strong>Browse Books</strong>
+          <h2 className="section-title">Last Created Room</h2>
+          {lastCreatedRoom ? (
+            <div className="comment-item">
+              <strong>{lastCreatedRoom.name}</strong>
               <p className="card-text" style={{ marginTop: 6 }}>
-                Open the catalog and inspect books prepared for room-based
-                reading.
+                Room #{lastCreatedRoom.id}, Book: {lastCreatedRoom.bookTitle}
               </p>
-            </Link>
-
-            <Link className="comment-item" to="/rooms/create">
-              <strong>Create a Room</strong>
-              <p className="card-text" style={{ marginTop: 6 }}>
-                Set a room name, choose a book, and define future H3 parameters.
-              </p>
-            </Link>
-
-            <Link className="comment-item" to="/admin">
-              <strong>Open Admin Panel</strong>
-              <p className="card-text" style={{ marginTop: 6 }}>
-                Preview the management interface for books, stats, and audit
-                visibility.
-              </p>
-            </Link>
-          </div>
+              <Link
+                className="button"
+                style={{ marginTop: 12, display: "inline-flex" }}
+                to={`/rooms/${lastCreatedRoom.id}`}
+                state={{ room: lastCreatedRoom }}
+              >
+                Open Room
+              </Link>
+            </div>
+          ) : (
+            <p className="card-text">
+              No room saved yet. Create one to see quick access here.
+            </p>
+          )}
         </section>
       </div>
 
-      <div className="footer">
-        BookCircle UI prototype — ready for backend integration.
-      </div>
+      <section className="card" style={{ marginTop: 20 }}>
+        <h2 className="section-title">Search Results</h2>
+
+        {rooms.length === 0 ? (
+          <p className="card-text">No rooms found yet. Search by room name above.</p>
+        ) : (
+          <div className="grid">
+            {rooms.map((room) => (
+              <div key={room.id} className="comment-item">
+                <strong>{room.name}</strong>
+                <p className="card-text" style={{ marginTop: 6 }}>
+                  Room #{room.id}, Book: {room.bookTitle || "Not set"}
+                </p>
+                <Link
+                  className="button"
+                  style={{ marginTop: 12, display: "inline-flex" }}
+                  to={`/rooms/${room.id}`}
+                  state={{ room }}
+                >
+                  Open Room
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

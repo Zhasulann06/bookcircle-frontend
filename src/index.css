@@ -1,4 +1,9 @@
 :root {
+  --primary: #1E3A5F;
+  --accent: #E98A4A;
+  --soft: #E6D3B3;
+  --bg: #F7F4EF;
+  --text: #1F2937;
   font-family: Inter, Arial, sans-serif;
   color: #111827;
   background: #f5f7fb;
@@ -18,10 +23,7 @@ body,
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.10), transparent 28%),
-    radial-gradient(circle at top right, rgba(124, 58, 237, 0.10), transparent 24%),
-    linear-gradient(180deg, #f8faff 0%, #eef2ff 100%);
+  background: var(--bg);
   color: #111827;
 }
 
@@ -47,9 +49,9 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
-  background: rgba(255, 255, 255, 0.75);
+  background: linear-gradient(135deg, #ffffff, #f7f4ef);
+  border-bottom: 1px solid #eee;
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -77,6 +79,7 @@ select {
 .brand-title {
   font-size: 20px;
   font-weight: 700;
+  color: var(--primary);
 }
 
 .brand-subtitle {
@@ -177,11 +180,11 @@ select {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(229, 231, 235, 0.9);
+  background: white;
+  border: 1px solid #eee;
+  box-shadow: 0 10px 30px rgba(30, 58, 95, 0.08);
   border-radius: 24px;
   padding: 22px;
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
 }
 
 .card-title {
@@ -199,7 +202,7 @@ select {
 .hero-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #111827 0%, #312e81 55%, #6d28d9 100%);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
   color: white;
   border-radius: 28px;
   padding: 28px;
@@ -246,8 +249,8 @@ select {
 .stat-card {
   padding: 22px;
   border-radius: 24px;
-  background: linear-gradient(135deg, #ffffff, #f8faff);
-  border: 1px solid #e5e7eb;
+  background: white;
+  border: 1px solid #eee;
   box-shadow: 0 14px 35px rgba(15, 23, 42, 0.05);
 }
 
@@ -314,7 +317,7 @@ select {
   border: none;
   border-radius: 16px;
   padding: 13px 18px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, var(--primary), #2c5282);
   color: white;
   font-weight: 700;
   cursor: pointer;
@@ -323,18 +326,14 @@ select {
 }
 
 .button:hover {
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #2c5282, var(--primary));
 }
 
 .button-secondary {
-  background: white;
-  color: #111827;
-  border: 1px solid #dbe1ea;
+  background: var(--soft);
+  color: var(--primary);
+  border: none;
   box-shadow: none;
-}
-
-.button-secondary:hover {
-  background: #f8fafc;
 }
 
 .button-danger {
@@ -359,6 +358,32 @@ select {
 .book-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.10);
+}
+
+.book-cover-wrap {
+  margin-bottom: 14px;
+}
+
+.book-cover {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+}
+
+.book-cover-fallback {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
 }
 
 .book-pill {
@@ -509,4 +534,57 @@ select {
   .hero-title {
     font-size: 30px;
   }
+}
+
+.map-card {
+  width: 100%;
+  height: 420px;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+}
+
+.room-map {
+  width: 100%;
+  height: 100%;
+}
+
+
+.top-nav {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 28px;
+  background: rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid #e5e7eb;
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 72px;
+  z-index: 15;
+}
+
+.top-nav-link {
+  padding: 11px 16px;
+  border-radius: 14px;
+  color: #111827;
+  font-weight: 600;
+}
+
+.top-nav-link:hover {
+  background: #f0e6d6;
+  color: var(--primary);
+}
+
+.top-nav-link.active {
+  background: var(--soft);
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 10px; /* если хочешь мягкие края */
 }

@@ -1,78 +1,69 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchBooks } from "../api/booksApi";
+import { getApiErrorMessage } from "../utils/getApiErrorMessage";
 
-const books = [
-  {
-    id: 1,
-    title: "Clean Code",
-    author: "Robert C. Martin",
-    isbn: "9780132350884",
-    totalChapters: 17,
-    category: "Engineering",
-  },
-  {
-    id: 2,
-    title: "Clean Architecture",
-    author: "Robert C. Martin",
-    isbn: "9780134494166",
-    totalChapters: 20,
-    category: "Architecture",
-  },
-  {
-    id: 3,
-    title: "The Pragmatic Programmer",
-    author: "Andrew Hunt & David Thomas",
-    isbn: "9780135957059",
-    totalChapters: 11,
-    category: "Engineering",
-  },
-  {
-    id: 4,
-    title: "Design Patterns",
-    author: "Gamma, Helm, Johnson, Vlissides",
-    isbn: "9780201633610",
-    totalChapters: 14,
-    category: "Patterns",
-  },
-  {
-    id: 5,
-    title: "Atomic Habits",
-    author: "James Clear",
-    isbn: "9780735211292",
-    totalChapters: 20,
-    category: "Habits",
-  },
-  {
-    id: 6,
-    title: "Deep Work",
-    author: "Cal Newport",
-    isbn: "9781455586691",
-    totalChapters: 8,
-    category: "Productivity",
-  },
-];
+function BookCover({ title, coverUrl }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!coverUrl || hasError) {
+    return <div className="book-cover-fallback">No cover</div>;
+  }
+
+  return (
+    <img
+      className="book-cover"
+      src={coverUrl}
+      alt={`${title} cover`}
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 function BooksPage() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All categories");
+  const [books, setBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const categories = useMemo(() => {
-    const uniqueCategories = [...new Set(books.map((book) => book.category))];
-    return ["All categories", ...uniqueCategories];
-  }, []);
+  useEffect(() => {
+    let isCancelled = false;
+    const timerId = setTimeout(async () => {
+      setIsLoading(true);
+      setError("");
 
-  const filteredBooks = useMemo(() => {
-    return books.filter((book) => {
-      const matchesSearch =
-        book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        book.author.toLowerCase().includes(searchTerm.toLowerCase());
+      try {
+        const data = await fetchBooks(
+          searchTerm.trim() ? { query: searchTerm.trim() } : undefined
+        );
+        if (!isCancelled) {
+          setBooks(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setError(getApiErrorMessage(err, "Failed to load books"));
+          setBooks([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    }, 250);
 
-      const matchesCategory =
-        selectedCategory === "All categories" ||
-        book.category === selectedCategory;
+    return () => {
+      isCancelled = true;
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
 
-      return matchesSearch && matchesCategory;
+  const handleUseInRoom = (book) => {
+    navigate("/rooms/create", {
+      state: { selectedBookId: book.id },
     });
-  }, [searchTerm, selectedCategory]);
+  };
 
   return (
     <div>
@@ -80,70 +71,77 @@ function BooksPage() {
         <div>
           <h1 className="page-title">Books Library</h1>
           <p className="page-description">
-            Browse books prepared for room-based reading. This interface is ready
-            to be connected to the future books endpoint.
+            Find a book and use it to create your next reading room.
           </p>
         </div>
 
-        <span className="badge">Catalog Ready</span>
+        <span className="badge">{books.length} books</span>
       </div>
 
       <section className="card" style={{ marginBottom: 20 }}>
         <div className="form-row">
           <label className="label">
-            Search by title or author
+            Search by title
             <input
               className="input"
               type="text"
               placeholder="Search books..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(event) => setSearchTerm(event.target.value)}
             />
-          </label>
-
-          <label className="label">
-            Filter by category
-            <select
-              className="select"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
           </label>
         </div>
       </section>
 
-      {filteredBooks.length > 0 ? (
+      {error ? (
+        <section className="card" style={{ marginBottom: 20 }}>
+          <h2 className="section-title">Request failed</h2>
+          <p className="card-text">{error}</p>
+        </section>
+      ) : null}
+
+      {isLoading ? (
+        <section className="card">
+          <p className="card-text">Loading books...</p>
+        </section>
+      ) : null}
+
+      {!isLoading && books.length > 0 ? (
         <div className="book-grid">
-          {filteredBooks.map((book) => (
+          {books.map((book) => (
             <article key={book.id} className="book-card">
-              <div className="book-pill">{book.category}</div>
+              <div className="book-pill">Book #{book.id}</div>
+              <div className="book-cover-wrap">
+                <BookCover title={book.title} coverUrl={book.coverUrl} />
+              </div>
               <h3 className="book-title">{book.title}</h3>
-              <div className="book-meta">Author: {book.author}</div>
-              <div className="book-meta">ISBN: {book.isbn}</div>
+              <div className="book-meta">Author: {book.author || "Unknown"}</div>
+              <div className="book-meta">ISBN: {book.isbn || "Not set"}</div>
               <div className="book-meta">
-                Total Chapters: {book.totalChapters}
+                Total Chapters: {book.totalChapters ?? "Not set"}
               </div>
 
-              <button className="button" style={{ marginTop: 18 }} type="button">
-                View / Use in Room
+              <button
+                className="button"
+                style={{ marginTop: 18 }}
+                type="button"
+                onClick={() => handleUseInRoom(book)}
+              >
+                Use in Room
               </button>
             </article>
           ))}
         </div>
-      ) : (
+      ) : null}
+
+      {!isLoading && !error && books.length === 0 ? (
         <section className="card">
           <h2 className="section-title">No books found</h2>
           <p className="card-text">
-            Try changing the search text or selecting another category.
+            If list is empty, create the first book from the Admin page.
           </p>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

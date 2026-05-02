@@ -6,15 +6,14 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <Navbar />
-      <div className="layout">
-        <Sidebar />
-        <main className="page">
-          <Outlet />
-          <div className="footer">
-            BookCircle • Front-end prototype for backend handoff
-          </div>
-        </main>
-      </div>
+      <Sidebar />
+
+      <main className="page">
+        <Outlet />
+        <div className="footer">
+          BookCircle • Read together, chapter by chapter
+        </div>
+      </main>
     </div>
   );
 }
